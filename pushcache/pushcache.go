@@ -7,6 +7,13 @@ import (
 	"time"
 )
 
+type StopBehavior uint8
+
+const (
+	NoOpOnStop StopBehavior = 0
+	IdleOnStop StopBehavior = 1
+)
+
 type Handler[K comparable, V any] interface {
 	FirstHandler(time.Time, K, V)
 	IdleHandler(time.Time, time.Time, K, V)
@@ -17,6 +24,7 @@ type Options[K comparable, V any] struct {
 
 	QueueLength  uint16
 	IdleInterval time.Duration
+	StopBehavior StopBehavior
 
 	LogPrefix string
 	LogDebug  bool
@@ -189,7 +197,7 @@ func (c *Cache[K, V]) process() {
 		}
 	}
 
-	fire := func(k K, force bool) {
+	fire := func(k K, inExit bool) {
 		d, found := c.dataMap[k]
 		if !found {
 			log.Printf("%s: k=%v not found in dataMap", c.options.LogPrefix, k)
@@ -209,7 +217,7 @@ func (c *Cache[K, V]) process() {
 			)
 		}
 
-		if force {
+		if inExit {
 			idle()
 			return
 		}
@@ -233,6 +241,10 @@ func (c *Cache[K, V]) process() {
 	}
 
 	flush := func() {
+		if c.options.StopBehavior != IdleOnStop {
+			return
+		}
+
 		keyMap := make(map[K]struct{})
 		for k := range c.dataMap {
 			keyMap[k] = struct{}{}

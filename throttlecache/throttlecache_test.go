@@ -22,6 +22,7 @@ func Test1(t *testing.T) {
 
 			QueueLength:      256,
 			CooldownInterval: time.Second * 3,
+			StopBehavior:     throttlecache.TriggerOnStop,
 
 			LogPrefix: "Test1",
 			LogDebug:  true,

@@ -26,5 +26,12 @@ throttlecache.Cache[K, V]:
 - if no `Buffer` call is seen in the latest `CooldownInterval`, cycle ends
 - example use case: batched database changes which should span at least `CooldownInterval` in between writes
 
+holdcache.Cache[K, V]:
+- for any given key, if value added via `Hold` call is held till expiry, `CommitHandler` is invoked
+- while value is being held, any subsequent `Hold` call will invalidate previous value, invoking `InvalidateHandler`
+- `Commit` call will cause `InvalidateHandler` to be invoked on held value, and `CommitHandler` invoked on incoming value
+- `Invalidate` call will invalidate held value if present and invoke `InvalidateHandler`
+- example use case: scheduling device power off at a future time, which invalidates upon any user activity
+
 Dependencies:
 - this package relies on github.com/emirpasic/gods for parts of internal structures

@@ -26,6 +26,7 @@ func Test1(t *testing.T) {
 
 			QueueLength:    256,
 			GatherInterval: time.Second * 5,
+			StopBehavior:   gathercache.MatureOnStop,
 
 			LogPrefix: "Test1",
 			LogDebug:  true,

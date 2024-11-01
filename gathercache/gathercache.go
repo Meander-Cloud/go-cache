@@ -7,6 +7,13 @@ import (
 	"time"
 )
 
+type StopBehavior uint8
+
+const (
+	NoOpOnStop   StopBehavior = 0
+	MatureOnStop StopBehavior = 1
+)
+
 type Handler[K comparable, V any] interface {
 	FirstHandler(time.Time, K, V)
 	MaturityHandler(time.Time, K, V)
@@ -17,6 +24,7 @@ type Options[K comparable, V any] struct {
 
 	QueueLength    uint16
 	GatherInterval time.Duration
+	StopBehavior   StopBehavior
 
 	LogPrefix string
 	LogDebug  bool
@@ -201,6 +209,10 @@ func (c *Cache[K, V]) process() {
 	}
 
 	flush := func() {
+		if c.options.StopBehavior != MatureOnStop {
+			return
+		}
+
 		keyMap := make(map[K]struct{})
 		for k := range c.dataMap {
 			keyMap[k] = struct{}{}

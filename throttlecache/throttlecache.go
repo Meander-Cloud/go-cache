@@ -7,6 +7,13 @@ import (
 	"time"
 )
 
+type StopBehavior uint8
+
+const (
+	NoOpOnStop    StopBehavior = 0
+	TriggerOnStop StopBehavior = 1
+)
+
 type Handler[K comparable, V any] interface {
 	TriggerHandler(bool, K, V)
 }
@@ -16,6 +23,7 @@ type Options[K comparable, V any] struct {
 
 	QueueLength      uint16
 	CooldownInterval time.Duration
+	StopBehavior     StopBehavior
 
 	LogPrefix string
 	LogDebug  bool
@@ -170,18 +178,6 @@ func (c *Cache[K, V]) process() {
 
 			c.dataMap[k] = d
 
-			// schedule trigger check
-			time.AfterFunc(
-				c.options.CooldownInterval,
-				func() {
-					if c.options.LogDebug {
-						log.Printf("%s: send triggerch, k=%v", c.options.LogPrefix, k)
-					}
-
-					c.triggerch <- k
-				},
-			)
-
 			c.options.TriggerHandler(
 				true, // immediate
 				k,
@@ -190,21 +186,6 @@ func (c *Cache[K, V]) process() {
 
 			// since triggered, reset data
 			d.triggered()
-		} else {
-			u()
-		}
-	}
-
-	trigger := func(k K) {
-		d, found := c.dataMap[k]
-		if !found {
-			log.Printf("%s: k=%v not found in dataMap", c.options.LogPrefix, k)
-			return
-		}
-
-		if d.hasData {
-			// there was data within current cooldown cycle,
-			// trigger, reset data, and schedule next cycle
 
 			// schedule trigger check
 			time.AfterFunc(
@@ -217,7 +198,19 @@ func (c *Cache[K, V]) process() {
 					c.triggerch <- k
 				},
 			)
+		} else {
+			u()
+		}
+	}
 
+	trigger := func(k K, inExit bool) {
+		d, found := c.dataMap[k]
+		if !found {
+			log.Printf("%s: k=%v not found in dataMap", c.options.LogPrefix, k)
+			return
+		}
+
+		invoke := func() {
 			c.options.TriggerHandler(
 				false, // has waited
 				k,
@@ -226,28 +219,61 @@ func (c *Cache[K, V]) process() {
 
 			// since triggered, reset data
 			d.triggered()
-		} else {
-			// no data within current cooldown cycle, safe to purge cache,
-			// so next buffer request on this key will start new flow
+		}
+
+		purge := func() {
+			defer c.returnEntryData(d)
 
 			if c.options.LogDebug {
 				log.Printf("%s: purging k=%v, first=%v", c.options.LogPrefix, k, d.first)
 			}
 
 			delete(c.dataMap, k)
+		}
 
-			c.returnEntryData(d)
+		if inExit {
+			if d.hasData {
+				invoke()
+			}
+
+			purge()
+			return
+		}
+
+		if d.hasData {
+			// there was data within current cooldown cycle,
+			// trigger, reset data, schedule next cycle
+			invoke()
+
+			time.AfterFunc(
+				c.options.CooldownInterval,
+				func() {
+					if c.options.LogDebug {
+						log.Printf("%s: send triggerch, k=%v", c.options.LogPrefix, k)
+					}
+
+					c.triggerch <- k
+				},
+			)
+		} else {
+			// no data within current cooldown cycle, safe to purge cache,
+			// so next buffer request on this key will start new flow
+			purge()
 		}
 	}
 
 	flush := func() {
+		if c.options.StopBehavior != TriggerOnStop {
+			return
+		}
+
 		keyMap := make(map[K]struct{})
 		for k := range c.dataMap {
 			keyMap[k] = struct{}{}
 		}
 
 		for k := range keyMap {
-			trigger(k)
+			trigger(k, true)
 		}
 	}
 
@@ -260,7 +286,7 @@ func (c *Cache[K, V]) process() {
 		case e := <-c.bufferch:
 			buffer(e)
 		case k := <-c.triggerch:
-			trigger(k)
+			trigger(k, false)
 		}
 	}
 }

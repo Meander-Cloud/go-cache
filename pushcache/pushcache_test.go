@@ -26,6 +26,7 @@ func Test1(t *testing.T) {
 
 			QueueLength:  256,
 			IdleInterval: time.Second * 3,
+			StopBehavior: pushcache.IdleOnStop,
 
 			LogPrefix: "Test1",
 			LogDebug:  true,
