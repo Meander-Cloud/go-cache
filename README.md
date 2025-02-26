@@ -24,7 +24,9 @@ throttlecache.Cache[K, V]:
 - subsequent `Buffer` calls intend to accumulate value via user installed functor
 - `TriggerHandler` is invoked with immediate as false, after each ensuing `CooldownInterval` during which at least one `Buffer` call is seen
 - if no `Buffer` call is seen in the latest `CooldownInterval`, cycle ends
-- example use case: batched database changes which should span at least `CooldownInterval` in between writes
+- example use cases:
+-- batched database changes which should span at least `CooldownInterval` in between writes
+-- throttled consumption of event queues
 
 holdcache.Cache[K, V]:
 - for any given key, if value added via `Hold` call is held till expiry, `CommitHandler` is invoked

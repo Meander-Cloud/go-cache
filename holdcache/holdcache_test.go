@@ -20,7 +20,9 @@ func (h *Handler) InvalidateHandler(k uint8, v func() string) {
 }
 
 func Test1(t *testing.T) {
-	cache := holdcache.NewCache[uint8, func() string](
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
+
+	cache := holdcache.NewCache(
 		&holdcache.Options[uint8, func() string]{
 			Handler: &Handler{},
 

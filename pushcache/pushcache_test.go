@@ -20,7 +20,9 @@ func (h *Handler) IdleHandler(first, last time.Time, k uint8, v []byte) {
 }
 
 func Test1(t *testing.T) {
-	cache := pushcache.NewCache[uint8, []byte](
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
+
+	cache := pushcache.NewCache(
 		&pushcache.Options[uint8, []byte]{
 			Handler: &Handler{},
 

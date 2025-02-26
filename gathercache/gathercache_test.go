@@ -20,7 +20,9 @@ func (h *Handler) MaturityHandler(first time.Time, k uint8, v []byte) {
 }
 
 func Test1(t *testing.T) {
-	cache := gathercache.NewCache[uint8, []byte](
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
+
+	cache := gathercache.NewCache(
 		&gathercache.Options[uint8, []byte]{
 			Handler: &Handler{},
 
