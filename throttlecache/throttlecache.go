@@ -299,3 +299,18 @@ func (c *Cache[K, V]) Buffer(k K, f func(V) V) {
 
 	c.bufferch <- e
 }
+
+// f will be invoked on internal process goroutine
+func (c *Cache[K, V]) TryBuffer(k K, f func(V) V) {
+	e := c.getBufferEvent()
+	e.k = k
+	e.f = f
+
+	select {
+	case c.bufferch <- e:
+	default:
+		if c.options.LogDebug {
+			log.Printf("%s: k=%v, failed to buffer event", c.options.LogPrefix, k)
+		}
+	}
+}
