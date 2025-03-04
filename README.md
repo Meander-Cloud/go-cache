@@ -27,6 +27,7 @@ throttlecache.Cache[K, V]:
 - example use cases:
   - batched database changes which should span at least `CooldownInterval` in between writes
   - throttled consumption of event queues, see example use of [`throttlecache.Queue[K]`](throttlecache/throttlequeue_test.go)
+  - buffering latest bytes per throttle period in a data stream, see example use of [`throttlecache.BufferChain[K, V]`](throttlecache/throttlebufferchain_test.go)
 
 holdcache.Cache[K, V]:
 - for any given key, if value added via `Hold` call is held till expiry, `CommitHandler` is invoked
