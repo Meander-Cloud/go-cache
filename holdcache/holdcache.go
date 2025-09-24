@@ -186,7 +186,7 @@ func (c *Cache[K, V]) getEntryData() *entryData[V] {
 	dAny := c.entryDataPool.Get()
 	d, ok := dAny.(*entryData[V])
 	if !ok {
-		panic(fmt.Errorf("failed to cast entryData, entryDataPool corrupt, dAny=%+v", dAny))
+		panic(fmt.Errorf("%s: failed to cast entryData, entryDataPool corrupt, dAny=%+v", c.options.LogPrefix, dAny))
 	}
 	return d
 }
@@ -200,7 +200,7 @@ func (c *Cache[K, V]) getTimerData() *timerData[K] {
 	tAny := c.timerDataPool.Get()
 	t, ok := tAny.(*timerData[K])
 	if !ok {
-		panic(fmt.Errorf("failed to cast timerData, timerDataPool corrupt, tAny=%+v", tAny))
+		panic(fmt.Errorf("%s: failed to cast timerData, timerDataPool corrupt, tAny=%+v", c.options.LogPrefix, tAny))
 	}
 	return t
 }
@@ -214,7 +214,7 @@ func (c *Cache[K, V]) getHoldEvent() *holdEvent[K, V] {
 	eAny := c.holdEventPool.Get()
 	e, ok := eAny.(*holdEvent[K, V])
 	if !ok {
-		panic(fmt.Errorf("failed to cast holdEvent, holdEventPool corrupt, eAny=%+v", eAny))
+		panic(fmt.Errorf("%s: failed to cast holdEvent, holdEventPool corrupt, eAny=%+v", c.options.LogPrefix, eAny))
 	}
 	return e
 }
@@ -228,7 +228,7 @@ func (c *Cache[K, V]) getCommitEvent() *commitEvent[K, V] {
 	eAny := c.commitEventPool.Get()
 	e, ok := eAny.(*commitEvent[K, V])
 	if !ok {
-		panic(fmt.Errorf("failed to cast commitEvent, commitEventPool corrupt, eAny=%+v", eAny))
+		panic(fmt.Errorf("%s: failed to cast commitEvent, commitEventPool corrupt, eAny=%+v", c.options.LogPrefix, eAny))
 	}
 	return e
 }
@@ -242,7 +242,7 @@ func (c *Cache[K, V]) getInvalidateEvent() *invalidateEvent[K] {
 	eAny := c.invalidateEventPool.Get()
 	e, ok := eAny.(*invalidateEvent[K])
 	if !ok {
-		panic(fmt.Errorf("failed to cast invalidateEvent, invalidateEventPool corrupt, eAny=%+v", eAny))
+		panic(fmt.Errorf("%s: failed to cast invalidateEvent, invalidateEventPool corrupt, eAny=%+v", c.options.LogPrefix, eAny))
 	}
 	return e
 }

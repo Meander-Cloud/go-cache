@@ -123,7 +123,7 @@ func (c *Cache[K, V]) getEntryData() *entryData[V] {
 	dAny := c.entryDataPool.Get()
 	d, ok := dAny.(*entryData[V])
 	if !ok {
-		panic(fmt.Errorf("failed to cast entryData, entryDataPool corrupt, dAny=%+v", dAny))
+		panic(fmt.Errorf("%s: failed to cast entryData, entryDataPool corrupt, dAny=%+v", c.options.LogPrefix, dAny))
 	}
 	return d
 }
@@ -137,7 +137,7 @@ func (c *Cache[K, V]) getBufferEvent() *bufferEvent[K, V] {
 	eAny := c.bufferEventPool.Get()
 	e, ok := eAny.(*bufferEvent[K, V])
 	if !ok {
-		panic(fmt.Errorf("failed to cast bufferEvent, bufferEventPool corrupt, eAny=%+v", eAny))
+		panic(fmt.Errorf("%s: failed to cast bufferEvent, bufferEventPool corrupt, eAny=%+v", c.options.LogPrefix, eAny))
 	}
 	return e
 }

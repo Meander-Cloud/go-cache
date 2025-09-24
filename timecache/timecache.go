@@ -115,7 +115,7 @@ func (c *Cache[K, V]) getEntryData() *entryData[V] {
 	dAny := c.entryDataPool.Get()
 	d, ok := dAny.(*entryData[V])
 	if !ok {
-		panic(fmt.Errorf("failed to cast entryData, entryDataPool corrupt, dAny=%+v", dAny))
+		panic(fmt.Errorf("%s: failed to cast entryData, entryDataPool corrupt, dAny=%+v", c.options.LogPrefix, dAny))
 	}
 	return d
 }
