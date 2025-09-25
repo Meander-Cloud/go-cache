@@ -5,6 +5,8 @@ import (
 	"log"
 	"sync"
 	"time"
+
+	"github.com/Meander-Cloud/go-chdyn/chdyn"
 )
 
 type StopBehavior uint8
@@ -23,7 +25,6 @@ type Handler[K comparable, V any] interface {
 type Options[K comparable, V any] struct {
 	Handler[K, V]
 
-	QueueLength  uint16
 	StopBehavior StopBehavior
 
 	LogPrefix string
@@ -117,7 +118,7 @@ type Cache[K comparable, V any] struct {
 
 	exitwg  sync.WaitGroup
 	exitch  chan struct{}
-	eventch chan Event
+	eventch *chdyn.Chan[Event]
 	timerch chan *timerData[K]
 
 	seqnum  uint32
@@ -154,10 +155,17 @@ func NewCache[K comparable, V any](options *Options[K, V]) *Cache[K, V] {
 			},
 		},
 
-		exitwg:  sync.WaitGroup{},
-		exitch:  make(chan struct{}, 1),
-		eventch: make(chan Event, options.QueueLength),
-		timerch: make(chan *timerData[K], options.QueueLength),
+		exitwg: sync.WaitGroup{},
+		exitch: make(chan struct{}, 1),
+		eventch: chdyn.New(
+			&chdyn.Options[Event]{
+				InSize:    chdyn.InSize,
+				OutSize:   chdyn.OutSize,
+				LogPrefix: options.LogPrefix,
+				LogDebug:  options.LogDebug,
+			},
+		),
+		timerch: make(chan *timerData[K], 256),
 
 		seqnum:  0,
 		dataMap: make(map[K]*entryData[V]),
@@ -256,6 +264,8 @@ func (c *Cache[K, V]) process() {
 	log.Printf("%s: process goroutine starting", c.options.LogPrefix)
 
 	defer func() {
+		c.eventch.Stop()
+
 		log.Printf("%s: process goroutine exiting", c.options.LogPrefix)
 		c.exitwg.Done()
 	}()
@@ -412,7 +422,7 @@ func (c *Cache[K, V]) process() {
 			log.Printf("%s: exitch received", c.options.LogPrefix)
 			flush()
 			return
-		case event := <-c.eventch:
+		case event := <-c.eventch.Out():
 			switch e := event.(type) {
 			case *holdEvent[K, V]:
 				handleHold(e)
@@ -433,7 +443,7 @@ func (c *Cache[K, V]) Hold(k K, v V, d time.Duration) {
 	e.v = v
 	e.d = d
 
-	c.eventch <- e
+	c.eventch.In() <- e
 }
 
 func (c *Cache[K, V]) Commit(k K, v V) {
@@ -441,12 +451,12 @@ func (c *Cache[K, V]) Commit(k K, v V) {
 	e.k = k
 	e.v = v
 
-	c.eventch <- e
+	c.eventch.In() <- e
 }
 
 func (c *Cache[K, V]) Invalidate(k K) {
 	e := c.getInvalidateEvent()
 	e.k = k
 
-	c.eventch <- e
+	c.eventch.In() <- e
 }

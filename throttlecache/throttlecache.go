@@ -5,6 +5,8 @@ import (
 	"log"
 	"sync"
 	"time"
+
+	"github.com/Meander-Cloud/go-chdyn/chdyn"
 )
 
 type StopBehavior uint8
@@ -21,7 +23,6 @@ type Handler[K comparable, V any] interface {
 type Options[K comparable, V any] struct {
 	Handler[K, V]
 
-	QueueLength      uint16
 	CooldownInterval time.Duration
 	StopBehavior     StopBehavior
 
@@ -70,7 +71,7 @@ type Cache[K comparable, V any] struct {
 
 	exitwg    sync.WaitGroup
 	exitch    chan struct{}
-	bufferch  chan *bufferEvent[K, V]
+	bufferch  *chdyn.Chan[*bufferEvent[K, V]]
 	triggerch chan K
 
 	// key -> entryData
@@ -92,10 +93,17 @@ func NewCache[K comparable, V any](options *Options[K, V]) *Cache[K, V] {
 			},
 		},
 
-		exitwg:    sync.WaitGroup{},
-		exitch:    make(chan struct{}, 1),
-		bufferch:  make(chan *bufferEvent[K, V], options.QueueLength),
-		triggerch: make(chan K, options.QueueLength),
+		exitwg: sync.WaitGroup{},
+		exitch: make(chan struct{}, 1),
+		bufferch: chdyn.New(
+			&chdyn.Options[*bufferEvent[K, V]]{
+				InSize:    chdyn.InSize,
+				OutSize:   chdyn.OutSize,
+				LogPrefix: options.LogPrefix,
+				LogDebug:  options.LogDebug,
+			},
+		),
+		triggerch: make(chan K, 256),
 
 		dataMap: make(map[K]*entryData[V]),
 	}
@@ -151,6 +159,8 @@ func (c *Cache[K, V]) process() {
 	log.Printf("%s: process goroutine starting", c.options.LogPrefix)
 
 	defer func() {
+		c.bufferch.Stop()
+
 		log.Printf("%s: process goroutine exiting", c.options.LogPrefix)
 		c.exitwg.Done()
 	}()
@@ -283,7 +293,7 @@ func (c *Cache[K, V]) process() {
 			log.Printf("%s: exitch received", c.options.LogPrefix)
 			flush()
 			return
-		case e := <-c.bufferch:
+		case e := <-c.bufferch.Out():
 			buffer(e)
 		case k := <-c.triggerch:
 			trigger(k, false)
@@ -297,20 +307,5 @@ func (c *Cache[K, V]) Buffer(k K, f func(V) V) {
 	e.k = k
 	e.f = f
 
-	c.bufferch <- e
-}
-
-// f will be invoked on internal process goroutine
-func (c *Cache[K, V]) TryBuffer(k K, f func(V) V) {
-	e := c.getBufferEvent()
-	e.k = k
-	e.f = f
-
-	select {
-	case c.bufferch <- e:
-	default:
-		if c.options.LogDebug {
-			log.Printf("%s: k=%v, failed to buffer event", c.options.LogPrefix, k)
-		}
-	}
+	c.bufferch.In() <- e
 }

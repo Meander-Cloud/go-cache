@@ -26,7 +26,6 @@ func Test1(t *testing.T) {
 		&gathercache.Options[uint8, []byte]{
 			Handler: &Handler{},
 
-			QueueLength:    256,
 			GatherInterval: time.Second * 5,
 			StopBehavior:   gathercache.MatureOnStop,
 

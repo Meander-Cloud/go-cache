@@ -116,7 +116,6 @@ func NewQueue[K comparable](options *QueueOptions) *Queue[K] {
 		&Options[K, *List]{
 			Handler: q,
 
-			QueueLength:      256,
 			CooldownInterval: options.CooldownInterval,
 			StopBehavior:     TriggerOnStop,
 
@@ -199,8 +198,7 @@ func (q *Queue[K]) TriggerHandler(immediate bool, k K, list *List) {
 
 	// signal for next trigger, in case no new node is enqueued
 	if queueSize > 0 {
-		// use try buffer instead of buffer to avoid deadlock, in case cache buffer channel is full
-		q.cache.TryBuffer(
+		q.cache.Buffer(
 			k,
 			nil,
 		)

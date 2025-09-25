@@ -5,6 +5,8 @@ import (
 	"log"
 	"sync"
 	"time"
+
+	"github.com/Meander-Cloud/go-chdyn/chdyn"
 )
 
 type StopBehavior uint8
@@ -22,7 +24,6 @@ type Handler[K comparable, V any] interface {
 type Options[K comparable, V any] struct {
 	Handler[K, V]
 
-	QueueLength    uint16
 	GatherInterval time.Duration
 	StopBehavior   StopBehavior
 
@@ -62,7 +63,7 @@ type Cache[K comparable, V any] struct {
 
 	exitwg   sync.WaitGroup
 	exitch   chan struct{}
-	gatherch chan *gatherEvent[K, V]
+	gatherch *chdyn.Chan[*gatherEvent[K, V]]
 	maturech chan K
 
 	// key -> entryData
@@ -84,10 +85,17 @@ func NewCache[K comparable, V any](options *Options[K, V]) *Cache[K, V] {
 			},
 		},
 
-		exitwg:   sync.WaitGroup{},
-		exitch:   make(chan struct{}, 1),
-		gatherch: make(chan *gatherEvent[K, V], options.QueueLength),
-		maturech: make(chan K, options.QueueLength),
+		exitwg: sync.WaitGroup{},
+		exitch: make(chan struct{}, 1),
+		gatherch: chdyn.New(
+			&chdyn.Options[*gatherEvent[K, V]]{
+				InSize:    chdyn.InSize,
+				OutSize:   chdyn.OutSize,
+				LogPrefix: options.LogPrefix,
+				LogDebug:  options.LogDebug,
+			},
+		),
+		maturech: make(chan K, 256),
 
 		dataMap: make(map[K]*entryData[V]),
 	}
@@ -143,6 +151,8 @@ func (c *Cache[K, V]) process() {
 	log.Printf("%s: process goroutine starting", c.options.LogPrefix)
 
 	defer func() {
+		c.gatherch.Stop()
+
 		log.Printf("%s: process goroutine exiting", c.options.LogPrefix)
 		c.exitwg.Done()
 	}()
@@ -229,7 +239,7 @@ func (c *Cache[K, V]) process() {
 			log.Printf("%s: exitch received", c.options.LogPrefix)
 			flush()
 			return
-		case e := <-c.gatherch:
+		case e := <-c.gatherch.Out():
 			gather(e)
 		case k := <-c.maturech:
 			mature(k)
@@ -243,5 +253,5 @@ func (c *Cache[K, V]) Gather(k K, f func(V) V) {
 	e.k = k
 	e.f = f
 
-	c.gatherch <- e
+	c.gatherch.In() <- e
 }

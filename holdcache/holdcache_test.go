@@ -26,7 +26,6 @@ func Test1(t *testing.T) {
 		&holdcache.Options[uint8, func() string]{
 			Handler: &Handler{},
 
-			QueueLength:  256,
 			StopBehavior: holdcache.InvalidateOnStop,
 
 			LogPrefix: "Test1",

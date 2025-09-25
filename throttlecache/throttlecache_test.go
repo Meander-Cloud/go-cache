@@ -25,7 +25,6 @@ func Test1(t *testing.T) {
 				logPrefix: "Test1",
 			},
 
-			QueueLength:      256,
 			CooldownInterval: time.Second * 3,
 			StopBehavior:     throttlecache.TriggerOnStop,
 

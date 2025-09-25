@@ -173,7 +173,6 @@ func NewBufferChain[K comparable, V any](options *BufferChainOptions[K, V]) *Buf
 		&Options[K, *Chain[V]]{
 			Handler: z,
 
-			QueueLength:      256,
 			CooldownInterval: options.CooldownInterval,
 			StopBehavior:     NoOpOnStop,
 
