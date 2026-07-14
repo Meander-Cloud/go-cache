@@ -25,8 +25,8 @@ func Test1(t *testing.T) {
 				logPrefix: "Test1",
 			},
 
-			CooldownInterval: time.Second * 3,
-			StopBehavior:     throttlecache.TriggerOnStop,
+			ThrottleIntv: time.Second * 3,
+			StopBehavior: throttlecache.TriggerOnStop,
 
 			LogPrefix: "Test1",
 			LogDebug:  true,

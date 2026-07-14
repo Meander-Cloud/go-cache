@@ -22,7 +22,7 @@ func Test1(t *testing.T) {
 		&timecache.Options[uint8, string]{
 			Handler: &Handler[uint8, string]{},
 
-			ExpireInterval: time.Second * 5,
+			ExpireIntv: time.Second * 5,
 
 			LogPrefix: "Test1",
 			LogDebug:  true,

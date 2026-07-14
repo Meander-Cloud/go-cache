@@ -17,7 +17,7 @@ type Handler[K comparable, V any] interface {
 type Options[K comparable, V any] struct {
 	Handler[K, V]
 
-	ExpireInterval time.Duration
+	ExpireIntv time.Duration
 
 	LogPrefix string
 	LogDebug  bool
@@ -133,7 +133,7 @@ func (c *Cache[K, V]) lifecycle() {
 		c.exitwg.Done()
 	}()
 
-	ticker := time.NewTicker(c.options.ExpireInterval)
+	ticker := time.NewTicker(c.options.ExpireIntv)
 	defer ticker.Stop()
 
 	for {
@@ -265,7 +265,7 @@ func (c *Cache[K, V]) SetX(key K, value V, expire time.Duration) {
 
 func (c *Cache[K, V]) Set(key K, value V) {
 	// since options is modified only in New, this is safe to access directly
-	c.SetX(key, value, c.options.ExpireInterval)
+	c.SetX(key, value, c.options.ExpireIntv)
 }
 
 func (c *Cache[K, V]) Delete(key K) {

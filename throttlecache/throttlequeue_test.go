@@ -14,7 +14,7 @@ func Test2(t *testing.T) {
 
 	queue := throttlecache.NewQueue[struct{}](
 		&throttlecache.QueueOptions{
-			CooldownInterval: time.Second * 3,
+			ThrottleIntv: time.Second * 3,
 
 			LogPrefix: "Test2",
 			LogDebug:  true,
@@ -53,7 +53,7 @@ func Test3(t *testing.T) {
 
 	queue := throttlecache.NewQueue[string](
 		&throttlecache.QueueOptions{
-			CooldownInterval: time.Second * 2,
+			ThrottleIntv: time.Second * 2,
 
 			LogPrefix: "Test3",
 			LogDebug:  true,

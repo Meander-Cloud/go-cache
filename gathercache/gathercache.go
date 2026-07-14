@@ -24,8 +24,8 @@ type Handler[K comparable, V any] interface {
 type Options[K comparable, V any] struct {
 	Handler[K, V]
 
-	GatherInterval time.Duration
-	StopBehavior   StopBehavior
+	GatherWndw   time.Duration
+	StopBehavior StopBehavior
 
 	LogPrefix string
 	LogDebug  bool
@@ -180,10 +180,10 @@ func (c *Cache[K, V]) process() {
 
 			// schedule maturity
 			time.AfterFunc(
-				c.options.GatherInterval,
+				c.options.GatherWndw,
 				func() {
 					if c.options.LogDebug {
-						log.Printf("%s: send maturech, k=%v", c.options.LogPrefix, k)
+						log.Printf("%s: k=%v, send maturech", c.options.LogPrefix, k)
 					}
 
 					c.maturech <- k

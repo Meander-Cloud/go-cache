@@ -26,7 +26,7 @@ func Test1(t *testing.T) {
 		&pushcache.Options[uint8, []byte]{
 			Handler: &Handler{},
 
-			IdleInterval: time.Second * 3,
+			IdleWndw:     time.Second * 3,
 			StopBehavior: pushcache.IdleOnStop,
 
 			LogPrefix: "Test1",

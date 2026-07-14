@@ -312,7 +312,7 @@ func (c *Cache[K, V]) process() {
 				e.d,
 				func() {
 					if c.options.LogDebug {
-						log.Printf("%s: send timerch, k=%v, seqnum=%d", c.options.LogPrefix, t.k, t.seqnum)
+						log.Printf("%s: k=%v, seqnum=%d, send timerch", c.options.LogPrefix, t.k, t.seqnum)
 					}
 
 					c.timerch <- t

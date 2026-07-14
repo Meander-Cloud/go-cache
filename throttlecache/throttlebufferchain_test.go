@@ -25,8 +25,8 @@ func Test4(t *testing.T) {
 				logPrefix: "Test4",
 			},
 
-			TargetSize:       10,
-			CooldownInterval: time.Second * 2,
+			TargetSize:   10,
+			ThrottleIntv: time.Second * 2,
 
 			LogPrefix: "Test4",
 			LogDebug:  true,

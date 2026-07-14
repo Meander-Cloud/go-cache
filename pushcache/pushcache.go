@@ -24,7 +24,7 @@ type Handler[K comparable, V any] interface {
 type Options[K comparable, V any] struct {
 	Handler[K, V]
 
-	IdleInterval time.Duration
+	IdleWndw     time.Duration
 	StopBehavior StopBehavior
 
 	LogPrefix string
@@ -187,10 +187,10 @@ func (c *Cache[K, V]) process() {
 
 			// schedule idle marathon
 			time.AfterFunc(
-				d.last.Add(c.options.IdleInterval).Sub(nowUTC),
+				d.last.Add(c.options.IdleWndw).Sub(nowUTC),
 				func() {
 					if c.options.LogDebug {
-						log.Printf("%s: send firech, k=%v", c.options.LogPrefix, k)
+						log.Printf("%s: k=%v, send firech", c.options.LogPrefix, k)
 					}
 
 					c.firech <- k
@@ -232,14 +232,14 @@ func (c *Cache[K, V]) process() {
 			return
 		}
 
-		interval := d.last.Add(c.options.IdleInterval).Sub(time.Now().UTC())
-		if interval > 0 {
+		window := d.last.Add(c.options.IdleWndw).Sub(time.Now().UTC())
+		if window > 0 {
 			// continue idle marathon
 			time.AfterFunc(
-				interval,
+				window,
 				func() {
 					if c.options.LogDebug {
-						log.Printf("%s: send firech, k=%v", c.options.LogPrefix, k)
+						log.Printf("%s: k=%v, send firech", c.options.LogPrefix, k)
 					}
 
 					c.firech <- k

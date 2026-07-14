@@ -92,7 +92,7 @@ func (l *List) PopFront() (*Node, bool) {
 }
 
 type QueueOptions struct {
-	CooldownInterval time.Duration
+	ThrottleIntv time.Duration
 
 	LogPrefix string
 	LogDebug  bool
@@ -116,8 +116,8 @@ func NewQueue[K comparable](options *QueueOptions) *Queue[K] {
 		&Options[K, *List]{
 			Handler: q,
 
-			CooldownInterval: options.CooldownInterval,
-			StopBehavior:     TriggerOnStop,
+			ThrottleIntv: options.ThrottleIntv,
+			StopBehavior: TriggerOnStop,
 
 			LogPrefix: options.LogPrefix,
 			LogDebug:  options.LogDebug,

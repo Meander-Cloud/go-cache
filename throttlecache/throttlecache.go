@@ -23,8 +23,8 @@ type Handler[K comparable, V any] interface {
 type Options[K comparable, V any] struct {
 	Handler[K, V]
 
-	CooldownInterval time.Duration
-	StopBehavior     StopBehavior
+	ThrottleIntv time.Duration
+	StopBehavior StopBehavior
 
 	LogPrefix string
 	LogDebug  bool
@@ -199,10 +199,10 @@ func (c *Cache[K, V]) process() {
 
 			// schedule trigger check
 			time.AfterFunc(
-				c.options.CooldownInterval,
+				c.options.ThrottleIntv,
 				func() {
 					if c.options.LogDebug {
-						log.Printf("%s: send triggerch, k=%v", c.options.LogPrefix, k)
+						log.Printf("%s: k=%v, send triggerch", c.options.LogPrefix, k)
 					}
 
 					c.triggerch <- k
@@ -251,22 +251,22 @@ func (c *Cache[K, V]) process() {
 		}
 
 		if d.hasData {
-			// there was data within current cooldown cycle,
+			// there was data within current throttle cycle,
 			// trigger, reset data, schedule next cycle
 			invoke()
 
 			time.AfterFunc(
-				c.options.CooldownInterval,
+				c.options.ThrottleIntv,
 				func() {
 					if c.options.LogDebug {
-						log.Printf("%s: send triggerch, k=%v", c.options.LogPrefix, k)
+						log.Printf("%s: k=%v, send triggerch", c.options.LogPrefix, k)
 					}
 
 					c.triggerch <- k
 				},
 			)
 		} else {
-			// no data within current cooldown cycle, safe to purge cache,
+			// no data within current throttle cycle, safe to purge cache,
 			// so next buffer request on this key will start new flow
 			purge()
 		}

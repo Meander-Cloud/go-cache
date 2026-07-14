@@ -152,8 +152,8 @@ func (c *Chain[V]) Render(target uint32) []V {
 type BufferChainOptions[K comparable, V any] struct {
 	Handler[K, []V]
 
-	TargetSize       uint32
-	CooldownInterval time.Duration
+	TargetSize   uint32
+	ThrottleIntv time.Duration
 
 	LogPrefix string
 	LogDebug  bool
@@ -173,8 +173,8 @@ func NewBufferChain[K comparable, V any](options *BufferChainOptions[K, V]) *Buf
 		&Options[K, *Chain[V]]{
 			Handler: z,
 
-			CooldownInterval: options.CooldownInterval,
-			StopBehavior:     NoOpOnStop,
+			ThrottleIntv: options.ThrottleIntv,
+			StopBehavior: NoOpOnStop,
 
 			LogPrefix: options.LogPrefix,
 			LogDebug:  options.LogDebug,

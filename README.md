@@ -3,29 +3,29 @@ Caching utilities
 
 timecache.Cache[K, V]:
 - each cached entry has an associated ttl
-- expired entries are evicted upon `ExpireInterval` ticks and will invoke `ExpiryHandler`
+- expired entries are evicted upon `ExpireIntv` ticks and will invoke `ExpiryHandler`
 - example use case: cached tokens and links which are valid for only a given duration
 
 gathercache.Cache[K, V]:
 - upon first `Gather` for a given key in a cycle, `FirstHandler` is invoked
 - subsequent `Gather` calls intend to accumulate value via user installed functor
-- eventually upon `GatherInterval` since first call, `MaturityHandler` is invoked on final value
-- example use case: reading and accumulating socket data, then logging the result upon `GatherInterval`
+- eventually upon `GatherWndw` since first call, `MaturityHandler` is invoked on final value
+- example use case: reading and accumulating socket data, then logging the result upon `GatherWndw`
 
 pushcache.Cache[K, V]:
 - upon first `Push` for a given key in a cycle, `FirstHandler` is invoked
 - subsequent `Push` calls intend to accumulate value via user installed functor
-- each `Push` call will extend cycle, until no `Push` is seen within the latest `IdleInterval`
+- each `Push` call will extend cycle, until no `Push` is seen within the latest `IdleWndw`
 - `IdleHandler` is invoked on final value at the end of each cycle
-- example use case: alarm on user's first chat message, for ongoing chat do not alarm unless `IdleInterval` has elapsed
+- example use case: alarm on user's first chat message, for ongoing chat do not alarm unless `IdleWndw` has elapsed
 
 throttlecache.Cache[K, V]:
 - upon first `Buffer` for a given key in a cycle, `TriggerHandler` is invoked with immediate as true
 - subsequent `Buffer` calls intend to accumulate value via user installed functor
-- `TriggerHandler` is invoked with immediate as false, after each ensuing `CooldownInterval` during which at least one `Buffer` call is seen
-- if no `Buffer` call is seen in the latest `CooldownInterval`, cycle ends
+- `TriggerHandler` is invoked with immediate as false, after each ensuing `ThrottleIntv` during which at least one `Buffer` call is seen
+- if no `Buffer` call is seen in the latest `ThrottleIntv`, cycle ends
 - example use cases:
-  - batched database changes which should span at least `CooldownInterval` in between writes
+  - batched database changes which should span at least `ThrottleIntv` in between writes
   - throttled consumption of event queues, see example use of [`throttlecache.Queue[K]`](throttlecache/throttlequeue_test.go)
   - buffering latest bytes per throttle period in a data stream, see example use of [`throttlecache.BufferChain[K, V]`](throttlecache/throttlebufferchain_test.go)
 
